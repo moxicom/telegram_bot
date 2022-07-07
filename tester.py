@@ -1,14 +1,6 @@
-import json
+import requests
 
-f = open('items.json')
-json_string = f.read()
-json_data = json.loads(json_string)
-items = list(json_data)
-f.close()
-items.append('keeek')
-print(items)
-f = open('items.json', 'w')
-json.dump(items, f, indent=4)
-
-
-
+res = requests.get('https://randomvideo.pythonanywhere.com/')
+link = res.text.find('https:')
+print(res.text)
+print(res.text[link:link + 52])
