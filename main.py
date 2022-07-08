@@ -1,12 +1,7 @@
-import telebot
+from telebot import types, TeleBot
 from random import choice
 import requests
-
-
-def get_rand_video():
-    res = requests.get('https://randomvideo.pythonanywhere.com/')
-    link = res.text.find('https:')
-    return res.text[link:link + 52]
+import meme_creator
 
 
 def take_list():
@@ -26,21 +21,17 @@ def add_to_list(item):
         print('уже было')
 
 
-def send_command_list(message, commands):
-    markup = telebot.types.ReplyKeyboardMarkup()
-    for item in commands:
-        markup.row(telebot.types.KeyboardButton('/' + item))
-    bot.reply_to(message, 'Вот команды кароч:', reply_markup=markup)
-
-
-bot = telebot.TeleBot('5555273889:AAFWKNbyyL182bXjXwqxZCspqGdrG0Z3lyM')
-command_list = ['help', 'анекдот', 'видос']
+bot = TeleBot('5555273889:AAFWKNbyyL182bXjXwqxZCspqGdrG0Z3lyM')
+command_list = ['help', 'анекдот', 'видос', 'мем']
 items = take_list()
 
 
 @bot.message_handler(commands=['help'])
 def helper(message):
-    send_command_list(message, command_list)
+    markup = types.ReplyKeyboardMarkup()
+    for item in command_list:
+        markup.row(types.KeyboardButton('/' + item))
+    bot.reply_to(message, 'Вот команды кароч:', reply_markup=markup)
 
 
 @bot.message_handler(commands=['анекдот'])
@@ -51,18 +42,36 @@ def joke(message):
 
 @bot.message_handler(commands=['видос'])
 def video(message):
-    bot.send_message(message.from_user.id, get_rand_video())
+    res = requests.get('https://randomvideo.pythonanywhere.com/')
+    link_ind = res.text.find('https:')
+    link = res.text[link_ind:link_ind + 52]
+    bot.send_message(message.from_user.id, link)
     print('added video')
 
 
 @bot.message_handler(commands=['мем'])
-def meme(message):
-    bot.send_photo(message.from_user.id, photo=open('photo.jpg', 'rb'))
-    bot.register_next_step_handler(message, message.text)
+def photo_meme(message):
+    _list = meme_creator.meme_list
+    markup = types.ReplyKeyboardMarkup()
+    for item in _list:
+        markup.row(types.KeyboardButton(item))
+    msg = bot.reply_to(message, 'выбирите шаблон', reply_markup=markup)
+    bot.register_next_step_handler(msg, choose_photo_meme)
 
 
-def take_next_message(message):
-    bot.send_message(message.from_user.id, message.text)
+photo_meme_type = ''
+
+
+def choose_photo_meme(message):
+    photo_meme_type = message.text
+    msg = bot.send_message(message.from_user.id, 'отлично, теперь введите текст')
+    bot.register_next_step_handler(msg, sent_photo_meme)
+
+
+def sent_photo_meme(message):
+    text = message.text
+    #func = getattr(meme_creator, photo_meme_type)
+    bot.send_photo(message.from_user.id, meme_creator.ronaldo(text))
 
 
 @bot.message_handler(content_types=['text'])
@@ -71,13 +80,11 @@ def start(message):
     if txt.lower()[:2] == 'ау':
         bot.send_message(message.from_user.id, txt + 'у')
     else:
-        bot.register_next_step_handler(message, take_next_message)
         add_to_list(message.text)
         chosen_phrase = choice(list(items))
         bot.send_message(message.from_user.id, chosen_phrase)
         print(f'user {message.from_user.id} added: {message.text}')
         print(f'answer: {chosen_phrase}' + '-' * 20)
-
 
 
 bot.polling(none_stop=True)
