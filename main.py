@@ -21,7 +21,7 @@ def add_to_list(item):
         print('уже было')
 
 
-bot = TeleBot('5555273889:AAFWKNbyyL182bXjXwqxZCspqGdrG0Z3lyM')
+bot = TeleBot('')
 command_list = ['help', 'анекдот', 'видос', 'мем']
 items = take_list()
 
@@ -63,6 +63,7 @@ photo_meme_type = ''
 
 
 def choose_photo_meme(message):
+    global photo_meme_type
     photo_meme_type = message.text
     msg = bot.send_message(message.from_user.id, 'отлично, теперь введите текст')
     bot.register_next_step_handler(msg, sent_photo_meme)
@@ -70,8 +71,9 @@ def choose_photo_meme(message):
 
 def sent_photo_meme(message):
     text = message.text
-    #func = getattr(meme_creator, photo_meme_type)
-    bot.send_photo(message.from_user.id, meme_creator.ronaldo(text))
+    print(text)
+    chosen_meme = getattr(meme_creator, photo_meme_type)
+    bot.send_photo(message.from_user.id, chosen_meme(text))
 
 
 @bot.message_handler(content_types=['text'])
